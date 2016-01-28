@@ -1,0 +1,51 @@
+<html>
+<head>
+<title>rbndr.us dns rebinding service</title>
+<script>
+var pattern=/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+
+function convert_dotted_quad(addr)
+{
+    return addr.split('.')
+               .map(function (a) { return Number(a).toString(16) })
+               .map(function (a) { return a < 16 ? "0" + a : a })
+               .join('');
+}
+
+function calculate()
+{
+    var result = document.getElementById('rbndr');
+    var a      = document.getElementById('address1').value;
+    var b      = document.getElementById('address2').value;
+
+   if (pattern.exec(a) && pattern.exec(b)) {
+    result.value = convert_dotted_quad(a)
+                 + "."
+                 + convert_dotted_quad(b)
+                 + "."
+                 + "rbndr.us";
+   } else {
+       result.value = "<invalid>";
+   }
+}
+</script>
+</head>
+<body onload="calculate()">
+
+<p>
+This page will help to generate a hostname for use with testing for <a href="https://en.wikipedia.org/wiki/DNS_rebinding">dns rebinding</a>
+vulnerabilities in software.
+</p>
+<p>
+To use this page, enter two ip addresses you would like to switch between. The
+hostname generated will resolve randomly to one of the addresses specified with
+a very low ttl.
+</p>
+All source code availble <a href="https://github.com/taviso/rbndr">here</a>.
+</p>
+A <input id=address1 value=127.0.0.1 onchange="calculate()">
+B <input id=address2 value=192.168.0.1 onchange="calculate()">
+<br>
+<br>
+<input id=rbndr disabled=true size=64>
+</body>
