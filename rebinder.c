@@ -91,7 +91,7 @@ bool parse_ip4_label(struct in_addr *out, const uint8_t label[8])
     };
 
     // Check for invalid characters
-    if (strspn(ip4addr + 2, "0123456789abcdefABCDEF") != strlen(ip4addr))
+    if (strspn(ip4addr + 2, "0123456789abcdefABCDEF") != 8)
         return false;
 
     return inet_aton(ip4addr, out) != 0;
@@ -200,6 +200,11 @@ int main(int argc, char **argv)
             warnx("query with %u byte secondary label (must be 8)", query.labels.secondary.len);
             reply.flags.rcode = ns_r_nxdomain; //lint !e641
             goto error;
+        }
+
+        if (memcmp(query.labels.primary.label, query.labels.secondary.label, 8) == 0) {
+            warnx("query with matching labels disallowed to prevent abuse");
+            reply.flags.rcode = ns_r_refused; //lint !e641
         }
 
         if (memcmp(&query.labels.domain, &kExpectedDomain, sizeof kExpectedDomain) != 0) {
