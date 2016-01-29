@@ -14,11 +14,11 @@
 #include <arpa/inet.h>
 
 // This is a very very simple non-conforming nameserver for DNS rebinding
-// attacks. Do not use this code for anything.
+// attacks. Do not use this code for anything important.
 //
-//lint -e754 local struct member not referenced
-//lint -e716 while (1)
-//lint -e801 goto is deprecated
+// Tavis Ormandy <taviso@cmpxchg8b.com>, January 2016
+
+//lint -e754 -e716 -e801
 
 #define __packed __attribute__((packed))
 
@@ -90,8 +90,8 @@ bool parse_ip4_label(struct in_addr *out, const uint8_t label[8])
         0,
     };
 
-    // Check for invalid characters
-    if (strspn(ip4addr + 2, "0123456789abcdefABCDEF") != 8)
+    // Check for invalid characters, lowercase hexadecimal digits only.
+    if (strspn(ip4addr + 2, "0123456789abcdef") != 8)
         return false;
 
     return inet_aton(ip4addr, out) != 0;
@@ -185,11 +185,7 @@ int main(int argc, char **argv)
             goto error;
         }
 
-        if (query.qtype != htons(ns_t_a)) { //lint !e641
-            warnx("unsupported qtype in question, returning no answers (qtype %u)", ntohs(query.qtype));
-            goto error;
-        }
-
+        // Check that these labels are the right size (8 hexadecimal digits).
         if (query.labels.primary.len != 8) {
             warnx("query with %u byte primary label (must be 8)", query.labels.primary.len);
             reply.flags.rcode = ns_r_nxdomain; //lint !e641
@@ -202,14 +198,22 @@ int main(int argc, char **argv)
             goto error;
         }
 
+        // This service is for testing dns rebinding, not free hostnames!
         if (memcmp(query.labels.primary.label, query.labels.secondary.label, 8) == 0) {
-            warnx("query with matching labels disallowed to prevent abuse");
+            warnx("query with matching labels disallowed to discourage abuse");
             reply.flags.rcode = ns_r_refused; //lint !e641
         }
 
+        // Make sure the root matches.
         if (memcmp(&query.labels.domain, &kExpectedDomain, sizeof kExpectedDomain) != 0) {
             warnx("query for unrecognised domain (must be .rbndr.us)");
             reply.flags.rcode = ns_r_nxdomain; //lint !e641
+            goto error;
+        }
+
+        // I only support A queries.
+        if (query.qtype != htons(ns_t_a)) { //lint !e641
+            warnx("unsupported qtype in question, returning no answers (qtype %u)", ntohs(query.qtype));
             goto error;
         }
 
@@ -238,7 +242,6 @@ int main(int argc, char **argv)
                    (struct sockaddr *) &address,
                    addrlen) != offsetof(struct header, ptr)) {  //lint !e737 !e507
             warn("sendto failed to sending error response to unsupported query");
-            continue;
         }
     }
 
