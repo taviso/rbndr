@@ -8,7 +8,7 @@ function convert_dotted_quad(addr)
 {
     return addr.split('.')
                .map(function (a) { return Number(a).toString(16) })
-               .map(function (a) { return a < 16 ? "0" + a : a })
+               .map(function (a) { return a.length < 2 ? "0" + a : a })
                .join('');
 }
 
