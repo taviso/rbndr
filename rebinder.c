@@ -202,6 +202,7 @@ int main(int argc, char **argv)
         if (memcmp(query.labels.primary.label, query.labels.secondary.label, 8) == 0) {
             warnx("query with matching labels disallowed to discourage abuse");
             reply.flags.rcode = ns_r_refused; //lint !e641
+            goto error;
         }
 
         // Make sure the root matches.
