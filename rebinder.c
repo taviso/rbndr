@@ -219,7 +219,7 @@ int main(int argc, char **argv)
         }
 
         // Choose a random label to return based on ID.
-        if (!parse_ip4_label(&reply.rdata, (query.id & 1) ? query.labels.primary.label : query.labels.secondary.label)) {
+        if (!parse_ip4_label(&reply.rdata, (rand()%2) ? query.labels.primary.label : query.labels.secondary.label)) {
             warnx("client provided an invalid ip4 address, ignoring reqest");
             reply.flags.rcode = ns_r_nxdomain; //lint !e641
             goto error;
